@@ -17,7 +17,7 @@ const Calculator = () => {
                 key={i} 
                 onClick={() => updateCalc((i + 1).toString())}>
                     {i + 1}
-                    </button>
+                </button>
             )
         }
 
@@ -26,19 +26,23 @@ const Calculator = () => {
 
     const updateCalc = val => {
         if (operators.includes(val) && calc === '' ||
-        operators.includes(val) && operators.includes(calc.slice(-1))) {
+            operators.includes(val) && operators.includes(calc.slice(-1))) {
             return;
         }
         
+        if (calc === '' && val === '0') {
+            return;
+        }
+
         setCalc(calc + val);
 
         if (!operators.includes(val)) {
-            setResult(eval(calc + val).toString());
+            setResult(calculateExpression(calc + val).toString());
         }
     }
 
     const calculate = () => {
-        setCalc(eval(calc).toString());
+        setCalc(calculateExpression(calc).toString());
         setResult("");
     }
 
@@ -47,10 +51,32 @@ const Calculator = () => {
         setResult("");
     }
 
+    const calculateExpression = (expression) => {
+        const regex = /(\d+\.?\d*)([\+\-\*\/])(\d+\.?\d*)/;
+        const match = regex.exec(expression);
+
+        if (!match) {
+            return parseFloat(expression);
+        }
+
+        const [, a, operator, b] = match;
+        const left = parseFloat(a);
+        const right = parseFloat(b);
+
+        if (operator === '+') {
+            return calculateExpression(expression.replace(regex, left + right));
+        } else if (operator === '-') {
+            return calculateExpression(expression.replace(regex, left - right));
+        } else if (operator === '*') {
+            return calculateExpression(expression.replace(regex, left * right));
+        } else if (operator === '/') {
+            return calculateExpression(expression.replace(regex, left / right));
+        }
+    }
+
     return (
         <div id="calculator">
             <div id="display">
-                {result ? <span>({result})</span> : ''} 
                 {calc || '0'}
             </div>
 
@@ -64,8 +90,8 @@ const Calculator = () => {
 
             <div id="numbers">
                 {createNumbers()}
-                <button id="zero">0</button>
-                <button id="decimal">.</button>
+                <button id="zero" onClick={() => updateCalc('0')}>0</button>
+                <button id="decimal" onClick={() => updateCalc('.')}>.</button>
                 <button id="equals" onClick={calculate}>=</button>
             </div>
         </div>
